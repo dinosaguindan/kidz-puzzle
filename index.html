@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Truck Puzzle Game</title>
 
 <style>
-
 *{
   margin:0;
   padding:0;
@@ -39,17 +38,18 @@ h1{ margin:20px; }
   grid-template-rows:repeat(3,1fr);
   position:relative;
   border:4px solid white;
-  margin-top:10px;
+  overflow:hidden;
+  margin-top:5px;
 }
 
-/* GUIDE */
+/* GUIDE IMAGE */
 .board::before{
   content:"";
   position:absolute;
   inset:0;
-  background:url('./trucks/Kamaz-PNG-Clipart.png');
   background-size:450px 450px;
-  opacity:0.4;
+  opacity:0.35;
+  z-index:0;
 }
 
 /* SLOT */
@@ -73,11 +73,10 @@ h1{ margin:20px; }
 .piece{
   width:150px;
   height:150px;
-  background-image:url('./trucks/Kamaz-PNG-Clipart.png');
-  background-size:450px 450px;
   border:2px solid white;
-  touch-action:none;
   cursor:grab;
+  touch-action:none;
+  background-size:450px 450px;
 }
 
 .message{
@@ -90,6 +89,11 @@ h1{ margin:20px; }
   border:3px solid #22c55e;
 }
 
+/* SUCCESS */
+@keyframes pop{
+  0%{ transform:scale(0.5); opacity:0; }
+  100%{ transform:scale(1); opacity:1; }
+}
 </style>
 </head>
 
@@ -121,8 +125,8 @@ h1{ margin:20px; }
 
 const piecesContainer = document.getElementById("pieces");
 const slots = document.querySelectorAll(".slot");
-const message = document.getElementById("message");
 const board = document.getElementById("board");
+const message = document.getElementById("message");
 
 const GRID = 3;
 const SIZE = 450 / GRID;
@@ -132,63 +136,113 @@ let offsetX = 0;
 let offsetY = 0;
 let completed = 0;
 
-/* CREATE PIECES */
-const pieces = [];
 
-for(let i=0;i<9;i++){
 
-  const div = document.createElement("div");
-  div.classList.add("piece");
-  div.dataset.index = i;
 
-  const x = (i % GRID) * SIZE;
-  const y = Math.floor(i / GRID) * SIZE;
 
-  div.style.backgroundPosition = `-${x}px -${y}px`;
+/* LOCAL IMAGE LIBRARY */
+const images = [
+  "./trucks/36425eac87d48705269bcbe6431cf0fa.png",
+  "./trucks/42884e1c90bb552757f494eb1e678c1f.png",
+  "./trucks/4f485e78d0742465b82912b873abc18d.png",
+  "./trucks/614d0c4d9d60811a5329c729d4acfcae.png",
+  "./trucks/6a0e56b905ec8ec85fed81261a0f4d62.png",
+  "./trucks/782eef4a74af308912b13d247850f5b9.png",
+  "./trucks/7effa816983e6d85fbb06a6051a65081.png",
+  "./trucks/ac7edfdc14a410531e086abb6cdceb37.png",
+  "./trucks/b466934160a666803dbbdfa0289861c1.png",
+  "./trucks/c5477e36192e55536ed27f7714c28384.png",
+  "./trucks/ca93f16bfe599b8ad186f54ea430c3d0.png",
+  "./trucks/ed6ea415a66602d2077ad4ad07057802.png",
+  "./trucks/fb12483e6a9fd891b8ec2875e294546f.png",
+  "./trucks/Kamaz-PNG-Clipart.png",
+  "./trucks/075850be71a0e7803ba9152cec5dd78f.png",
+  "./trucks/0d060706842fdf94e08e8de4af1b0fda.png",
+  "./trucks/1beb4aa1ec4c2ed9048cc3a3a13effe2.png",
+  "./trucks/76e8d3e818f8a8f0c7486fac52968687.png",
+  "./trucks/7f1187f8aec3a7329b783808c33dd990.png",
+  "./trucks/88682a4a8924a5cdc690afd4ae202c50.png",
+  "./trucks/a62e61e786994d43a08f53a9c0c1a65e.png",
+  "./trucks/ab6a4473d6d5a919bfab19494b8f69af.png",
+  "./trucks/b2caf4c26059c5c22e83abe312f9f9da.png"
+];
 
-  pieces.push(div);
+let currentImage = "";
+
+/* START / NEXT LEVEL */
+function loadStage(){
+
+  completed = 0;
+  piecesContainer.innerHTML = "";
+  message.innerHTML = "";
+
+  slots.forEach(s => {
+    s.innerHTML = "";
+    s.classList.remove("correct");
+  });
+
+  currentImage = images[Math.floor(Math.random() * images.length)];
+
+  board.style.setProperty("--img", `url(${currentImage})`);
+  board.style.setProperty("background-image", `url(${currentImage})`);
+  board.style.setProperty("background-size", "450px 450px");
+  createPieces();
 }
 
-/* shuffle */
-pieces.sort(() => Math.random() - 0.5);
+/* CREATE PIECES */
+function createPieces(){
 
-pieces.forEach(p => {
-  piecesContainer.appendChild(p);
+  let arr = [];
 
-  /* START DRAG */
-  p.addEventListener("pointerdown", (e) => {
+  for(let i=0;i<9;i++){
 
-    dragged = p;
+    const p = document.createElement("div");
+    p.classList.add("piece");
+    p.dataset.index = i;
 
-    const rect = p.getBoundingClientRect();
+    const x = (i % GRID) * SIZE;
+    const y = Math.floor(i / GRID) * SIZE;
 
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
+    p.style.backgroundImage = `url(${currentImage})`;
+    p.style.backgroundPosition = `-${x}px -${y}px`;
 
-    document.body.appendChild(p);
-    p.style.position = "absolute";
-    p.style.zIndex = 1000;
+    arr.push(p);
+  }
+
+  arr.sort(() => Math.random() - 0.5);
+
+  arr.forEach(p => {
+
+    piecesContainer.appendChild(p);
+
+    p.addEventListener("pointerdown", (e) => {
+
+      dragged = p;
+
+      const rect = p.getBoundingClientRect();
+
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+
+      document.body.appendChild(p);
+      p.style.position = "absolute";
+      p.style.zIndex = 999;
+    });
   });
-});
+}
 
 /* MOVE */
 document.addEventListener("pointermove", (e) => {
-
   if(!dragged) return;
 
   dragged.style.left = (e.clientX - offsetX) + "px";
   dragged.style.top = (e.clientY - offsetY) + "px";
 });
 
-/* DROP (FIXED LOGIC) */
+/* DROP (ROBUST HIT DETECTION) */
 document.addEventListener("pointerup", (e) => {
 
   if(!dragged) return;
-
-  const boardRect = board.getBoundingClientRect();
-
-  const x = e.clientX;
-  const y = e.clientY;
 
   let placed = false;
 
@@ -196,13 +250,13 @@ document.addEventListener("pointerup", (e) => {
 
     const rect = slot.getBoundingClientRect();
 
-    const isInside =
-      x > rect.left &&
-      x < rect.right &&
-      y > rect.top &&
-      y < rect.bottom;
+    const inside =
+      e.clientX > rect.left &&
+      e.clientX < rect.right &&
+      e.clientY > rect.top &&
+      e.clientY < rect.bottom;
 
-    if(isInside){
+    if(inside){
 
       const slotIndex = slot.dataset.index;
       const pieceIndex = dragged.dataset.index;
@@ -222,7 +276,7 @@ document.addEventListener("pointerup", (e) => {
         completed++;
 
         if(completed === 9){
-          message.innerHTML = "🎉 Puzzle Completed!";
+          showSuccess();
         }
 
       } else {
@@ -241,7 +295,6 @@ document.addEventListener("pointerup", (e) => {
   }
 
   dragged = null;
-
 });
 
 function resetPiece(){
@@ -249,6 +302,54 @@ function resetPiece(){
   dragged.style.left = "0";
   dragged.style.top = "0";
 }
+
+/* SUCCESS SCREEN */
+function showSuccess(){
+
+  const overlay = document.createElement("div");
+
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.background = "rgba(0,0,0,0.85)";
+  overlay.style.display = "flex";
+  overlay.style.flexDirection = "column";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  overlay.style.zIndex = "9999";
+
+  overlay.innerHTML = `
+    <h1 style="color:#4ade80; font-size:40px; animation:pop 0.5s ease;">
+      🎉 Congratulations!
+    </h1>
+
+    <button id="next"
+      style="
+        margin-top:20px;
+        padding:10px 20px;
+        font-size:18px;
+        background:#22c55e;
+        border:none;
+        color:white;
+        border-radius:10px;
+        cursor:pointer;
+      ">
+      Next Stage
+    </button>
+  `;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById("next").onclick = () => {
+    overlay.remove();
+    loadStage();
+  };
+}
+
+/* INIT */
+loadStage();
 
 </script>
 
